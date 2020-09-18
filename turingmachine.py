@@ -1,7 +1,10 @@
 
 
-# class State:
-#     pass
+class State:
+    def __init__(self, transitionsTuples, isHaltingState=False):
+        self.isHalting = isHaltingState
+
+        pass
 
 
 class Tape:
@@ -59,11 +62,24 @@ class Tape:
 
 
 class TuringMachine:
-    def __init__(self):
+    def __init__(self, numOfTapes=1):
+        self.numOfTapes = numOfTapes
         self.states = []
         self.alphabet = []  # Should be a set?
         self.tapes = []  # tape 0 is input tape, and last is output tape
         self.currentState = 0
+
+    def use_alphabet(self, alph):
+        if not self.alphabet:
+            print("Warning: Overwriting existing alphabet. If states have been created this will probably break things")
+        self.alphabet = set(alph)
+
+    def add_state(self, state):
+        if not self.alphabet:
+            print("Error: Define alphabet before adding states")
+            return
+        pass
+
 
     def step(self):
         tapeSymbols = [tape.read() for tape in self.tapes]
