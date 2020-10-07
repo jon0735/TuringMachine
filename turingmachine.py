@@ -4,17 +4,17 @@ class State:
     def __init__(self, transitionsTuples=None, isHaltingState=False):
         #  TransitionTuples: list of ( (toState(int), fromSymbols(list of chars), newSymbols(list of chars)), shifting(list of 1/0/-1) )
         self.isHalting = isHaltingState
-        self.transitionFunction = map() # Map for transition information. 
+        self.transitionFunction = dict() # Map for transition information. 
         if transitionsTuples is not None:
             for tup in transitionsTuples:
-                addTransisiton(tup[1], (tup[0], tup[2])) 
+                addTransition(tup[1], (tup[0], tup[2])) 
 
 
-    def addTransisiton(self, symbols, toState, toSymbols, shifting):
+    def addTransition(self, symbols, toState, toSymbols, shifting):
         transInfo = self.transitionFunction
         for s in symbols[:-1]:  # go down all symbols except the last
             if s not in transInfo:
-                transInfo[s] = map()
+                transInfo[s] = dict()
             transInfo = transInfo[s]
         lastS = symbols[-1]
         if lastS == transInfo:
@@ -91,18 +91,19 @@ class TuringMachine:
         self.numOfTapes = numOfTapes
         self.states = []
         self.alphabet = set()  # Should be a set?
-        self.tapes = []  # tape 0 is input tape, and last is output tape
+        self.tapes = [Tape() for _ in range(numOfTapes)]  # tape 0 is input tape, and last is output tape
         self.currentState = 0
 
-
     def useAlphabet(self, alph):
-        if not self.alphabet:
+        if len(self.alphabet) != 0:
             print("Warning: Overwriting existing alphabet. If states have been created this will probably break things")
         self.alphabet = set(alph)
 
 
-    def setNumOfStates(self, numStates):
-        self.states = [State() for _ in range(numStates)]
+    def setNumOfStates(self, numStates, haltingStates=None):
+        if haltingStates is None:
+            haltingStates = []
+        self.states = [State(isHaltingState=(i in haltingStates)) for i in range(numStates)]
 
 
     def addTransisiton(self, fromState, toState, fromSymbols, toSymbols, shifting):
@@ -119,6 +120,10 @@ class TuringMachine:
         for trans in transitionList:
             self.addTransisiton(trans[0], trans[1], trans[2], trans[3], trans[4])
             
+
+    def setInput(self, input):
+        for i, c in enumerate(input):
+            self.tapes[0][i] = c
 
     def step(self, printTape=False):
         tapeSymbols = [tape.read() for tape in self.tapes]
@@ -142,3 +147,5 @@ class TuringMachine:
 
 
 ## TODO NEXT: Lav simpel turing machine of test
+
+## TODO (future work): Handle input only tape
