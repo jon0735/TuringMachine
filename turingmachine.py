@@ -1,16 +1,42 @@
 
 
 class State:
-    def __init__(self, transitionsTuples, isHaltingState=False):
+    def __init__(self, transitionsTuples=None, isHaltingState=False):
+        #  TransitionTuples: list of ( (toState(int), fromSymbols(list of chars), newSymbols(list of chars)), shifting(list of 1/0/-1) )
         self.isHalting = isHaltingState
+        self.transitionFunction = map() # Map for transition information. 
+        if transitionsTuples is not None:
+            for tup in transitionsTuples:
+                addTransisiton(tup[1], (tup[0], tup[2])) 
 
-        pass
+
+    def addTransisiton(self, symbols, toState, toSymbols, shifting):
+        transInfo = self.transitionFunction
+        for s in symbols[:-1]:  # go down all symbols except the last
+            if s not in transInfo:
+                transInfo[s] = map()
+            transInfo = transInfo[s]
+        lastS = symbols[-1]
+        if lastS == transInfo:
+            print("Warning: Replacing transiton tuple")
+        transInfo[lastS] = (toState, toSymbols, shifting)
+            
+
+    def getTransitionInformation(self, tapeSymbols):
+        transInfo = self.transitionFunction
+        for s in tapeSymbols:
+            if s not in transInfo:
+                # No transition for this configuration. Machine should halt
+                return None
+            transInfo = transInfo[s]
+        return transInfo  # should be (state, writesymbols, shifting)
 
 
 class Tape:
     def __init__(self, initSize=10):
         self.head = 0
         # sizes = initSize // 3
+        # Initialising left (negative) side of tape to be less than right (positive). Is this justified?
         self.leftSize = initSize // 3
         self.rightSize = initSize - self.leftSize
         self.leftTape = [' '] * self.leftSize
@@ -43,7 +69,7 @@ class Tape:
             raise Exception("Can only write char (or strings of length 1). Given: " + char)
         self[self.head] = char
 
-    def shift(self, direction):
+    def shift(self, direction):  # assumes sequential tapes
         if direction == 0:
             return
         elif direction == 1:
@@ -60,34 +86,59 @@ class Tape:
             raise Exception("Can only shift 1, -1 or 0, not " + str(direction))
     
 
-
 class TuringMachine:
     def __init__(self, numOfTapes=1):
         self.numOfTapes = numOfTapes
         self.states = []
-        self.alphabet = []  # Should be a set?
+        self.alphabet = set()  # Should be a set?
         self.tapes = []  # tape 0 is input tape, and last is output tape
         self.currentState = 0
 
-    def use_alphabet(self, alph):
+
+    def useAlphabet(self, alph):
         if not self.alphabet:
             print("Warning: Overwriting existing alphabet. If states have been created this will probably break things")
         self.alphabet = set(alph)
 
-    def add_state(self, state):
-        if not self.alphabet:
-            print("Error: Define alphabet before adding states")
-            return
-        pass
+
+    def setNumOfStates(self, numStates):
+        self.states = [State() for _ in range(numStates)]
 
 
-    def step(self):
+    def addTransisiton(self, fromState, toState, fromSymbols, toSymbols, shifting):
+        for s in fromSymbols + toSymbols:
+            if s not in self.alphabet and s != " ":
+                print("Transitions contains symbol " + s + " not in alphabet")
+                return
+
+        state = self.states[fromState]
+        state.addTransition(fromSymbols, toState, toSymbols, shifting)
+
+
+    def addTransisitons(self, transitionList):
+        for trans in transitionList:
+            self.addTransisiton(trans[0], trans[1], trans[2], trans[3], trans[4])
+            
+
+    def step(self, printTape=False):
         tapeSymbols = [tape.read() for tape in self.tapes]
         state = self.states[self.currentState]
-        for symbol in tapeSymbols:
-            state = state[symbol]
-        
 
-        # TODO
-        pass
+        transitionInformation = state.getTransitionInformation(tapeSymbols)
+        if transitionInformation is None: # No transistion information from this configurations -> machine halts
+            return False
 
+        toState, writeSymbols, shifting = transitionInformation
+        for i in range(len(self.tapes)):
+            self.tapes[i].write(writeSymbols[i])
+
+        for i in range(len(self.tapes)):
+            self.tapes[i].shift(shifting[i])
+
+        # TODO: call function for getting the transition information based on the state and current tape symbols
+        # TODO: Use transition information to update tapes
+        # for symbol in tapeSymbols:
+        #     state = state[symbol]
+
+
+## TODO NEXT: Lav simpel turing machine of test

@@ -34,6 +34,17 @@ import time
 
 # print(tape.read())
 
-sys.stdout.write("ABCD")
-sys.stdout.write("\b\b")
-sys.stdout.write("ABCD")
+# sys.stdout.write("ABCD")
+# sys.stdout.write("\b\b")
+# sys.stdout.write("ABCD\n")
+
+
+# stuff = (("acd", 23), 2, 3)
+# print(stuff)
+
+
+turingMachine = tm.TuringMachine()
+
+turingMachine.useAlphabet(['1', '0', 'X'])
+
+
